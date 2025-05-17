@@ -1,4 +1,4 @@
-# ClearHear Subscription Management API
+# Subscription Management API Thing
 
 A Flask-based API for managing subscriptions and orders, built with SQLite, Jinja templates, Tailwind CSS, and Chart.js.
 
