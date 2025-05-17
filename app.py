@@ -1,8 +1,8 @@
 import os
 from flask import Flask, jsonify, render_template, request, abort
 from models import db, Subscription, Order
-from datetime import datetime
-from sqlalchemy import func
+from datetime import datetime, timedelta
+from sqlalchemy import func, text
 from dateutil.relativedelta import relativedelta
 from flask_restx import Api, Resource, fields
 from flask_limiter import Limiter
@@ -10,7 +10,12 @@ from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///clearhear.db'
+
+# Configure SQLAlchemy
+if os.getenv('FLASK_ENV') == 'testing':
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///subscriptions.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
@@ -37,7 +42,13 @@ order_model = api.model('Order', {
 load_dotenv()
 API_TOKEN = os.getenv('API_TOKEN', 'supersecrettoken')
 
-limiter = Limiter(get_remote_address, app=app, default_limits=["100 per hour"])
+# Configure rate limiter
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    storage_uri="memory://",
+    default_limits=["100 per hour"]
+)
 
 EXEMPT_PATHS = ['/healthz', '/docs', '/swagger.json']
 
@@ -281,13 +292,29 @@ def analyze_missed_payments():
         'details': missed_payments_details
     })
 
+@app.route('/v1/coding_test/subscription/<int:subscription_id>')
+def get_subscription_detail(subscription_id):
+    sub = db.session.get(Subscription, subscription_id)
+    if not sub:
+        abort(404)
+    return jsonify({
+        'id': sub.id,
+        'billing_interval__c': sub.billing_interval__c,
+        'end_date__c': sub.end_date__c.isoformat() if sub.end_date__c else None,
+        'next_payment_date__c': sub.next_payment_date__c.isoformat() if sub.next_payment_date__c else None,
+        'recurring_amount__c': sub.recurring_amount__c,
+        'start_date__c': sub.start_date__c.isoformat(),
+        'status__c': sub.status__c
+    })
+
 @app.route('/healthz')
 def health_check():
     try:
-        db.session.execute('SELECT 1')
+        db.session.execute(text('SELECT 1'))
         return jsonify({'status': 'ok'}), 200
-    except Exception:
-        return jsonify({'status': 'error'}), 500
+    except Exception as e:
+        app.logger.error(f"Health check failed: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 if __name__ == '__main__':
     with app.app_context():
