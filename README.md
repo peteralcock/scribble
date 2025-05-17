@@ -1,120 +1,84 @@
-# Subscription Management API Thing
+# Audicus Subscription Analytics API
 
-A hurried Flask-based API for managing subscriptions and orders, built with SQLite, Jinja templates, Tailwind CSS, and Chart.js.
+This API service fetches, parses, and analyzes subscription and order data from the Audicus API.
 
-## Features
+## Requirements
 
-- **Subscription Management**: Create, list, and manage subscriptions.
-- **Order Management**: Track orders associated with subscriptions.
-- **Analytics**: Analyze missed payments and subscription statistics.
-- **Authentication**: Token-based authentication for secure API access.
-- **Rate Limiting**: Protect against abuse with rate limits.
-- **OpenAPI Documentation**: Auto-generated Swagger UI at `/docs`.
-- **Health Check**: `/healthz` endpoint for deployment readiness.
+- Python 3.8+
+- Required packages listed in requirements.txt
 
-## Prerequisites
+## Installation
 
-- Python 3.11+
-- Docker (optional, for containerized deployment)
+1. Clone or unzip this repository
+2. Install the required packages:
 
-## Setup
-
-1. **Clone the repository**:
-   ```bash
-   git clone <repository-url>
-   cd clearhear
-   ```
-
-2. **Create a virtual environment**:
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
-
-3. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Create a `.env` file**:
-   ```
-   API_TOKEN=supersecrettoken
-   FLASK_ENV=production
-   ```
-
-5. **Initialize the database**:
-   ```bash
-   python3 -c "from app import app, db; app.app_context().push(); db.create_all()"
-   ```
+```bash
+pip install -r requirements.txt
+```
 
 ## Running the Application
 
-### Development
+To run the application, use the following command from the project root directory:
 
 ```bash
-python3 app.py
+python application.py
 ```
 
-### Production (Docker)
+The API will be available at http://localhost:8000
 
-```bash
-docker build -t clearhear .
-docker run -p 5000:5000 clearhear
+## API Endpoints
+
+### GET /analytics
+
+Returns analytics about Audicus subscriptions, including:
+- Total, active, on-hold, and cancelled subscriptions
+- Average subscription length in days
+- Number and value of missed payments (from on-hold or active subscriptions)
+
+Example response:
+```json
+{
+  "subscription_stats": {
+    "total_subscriptions": 100,
+    "active_subscriptions": 75,
+    "on_hold_subscriptions": 10,
+    "cancelled_subscriptions": 15,
+    "average_subscription_length_days": 187.5
+  },
+  "missed_payment_stats": {
+    "missed_payments_count": 23,
+    "missed_payments_value": 1250.75
+  }
+}
 ```
 
-## Testing
+## Documentation
 
-Run the tests with:
+Auto-generated API documentation is available at:
+- http://localhost:8000/docs (Swagger UI)
+- http://localhost:8000/redoc (ReDoc)
 
-```bash
-python3 -m pytest tests/test_app.py -v
+## Project Structure
+
+```
+audicus_analytics/
+├── app/
+│   ├── __init__.py
+│   ├── api_client.py     # Handles API communication
+│   ├── analytics.py      # Analytics calculation logic
+│   ├── main.py           # FastAPI application definition
+│   └── models.py         # Data models
+├── requirements.txt
+├── README.md
+└── application.py        # Entry point
 ```
 
-## API Documentation
+## Notes
 
-- **Swagger UI**: Visit `/docs` for interactive API documentation.
-- **Health Check**: `/healthz` returns `{"status": "ok"}` if the app is healthy.
+### API Limitations & Potential Improvements
 
-## Security
-
-- **Authentication**: All API endpoints (except `/healthz` and `/docs`) require a valid `Authorization: Bearer <API_TOKEN>` header.
-- **Rate Limiting**: 100 requests per hour per IP address.
-
-## License
-
-[MIT](LICENSE)
-
-## 🚀 Deployment & Production Usage
-
-### Run with Docker
-
-1. **Build the Docker image:**
-   ```sh
-   docker build -t clearhear .
-   ```
-2. **Run the container:**
-   ```sh
-   docker run -d -p 5000:5000 --name clearhear_app clearhear
-   ```
-3. **Access the app:**
-   - App: http://localhost:5000
-   - API docs: http://localhost:5000/docs
-
-4. **Stop the app:**
-   ```sh
-   docker stop clearhear_app
-   ```
-5. **View logs:**
-   ```sh
-   docker logs clearhear_app
-   ```
-
----
-
-## 🛡️ Production Notes
-- The Docker image uses Gunicorn for production WSGI serving.
-- For rate limiting in production, configure a persistent backend (e.g., Redis) as per [Flask-Limiter docs](https://flask-limiter.readthedocs.io#configuring-a-storage-backend).
-- Set a strong `API_TOKEN` in your environment or `.env` file.
-- For custom domains or HTTPS, use a reverse proxy (e.g., Nginx, Caddy).
-
---- 
+1. The service would benefit from bulk endpoints to fetch orders for multiple subscriptions at once
+2. Current implementation handles pagination manually by fetching all pages
+3. Concurrent requests are used to improve performance when fetching orders
+4. Error handling includes logging but could be expanded with more detailed error responses
+5. Date formats require normalization to handle ISO-8601 timestamps correctly
