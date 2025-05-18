@@ -1,6 +1,7 @@
 import pytest
 import pytest_asyncio
 import httpx
+from datetime import datetime
 from app.api_client import AudicusAPIClient
 
 @pytest_asyncio.fixture
