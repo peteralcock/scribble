@@ -1,5 +1,5 @@
 from typing import List, Dict, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import re
 from dateutil.relativedelta import relativedelta
 from app.models import Subscription, Order, SubscriptionStats, MissedPaymentStats
@@ -14,7 +14,7 @@ def calculate_subscription_stats(subscriptions: List[Subscription]) -> Subscript
     cancelled_subscriptions = sum(1 for sub in subscriptions if sub.status__c == "canceled")
     
     # Calculate average subscription length
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     subscription_lengths = []
     
     for sub in subscriptions:
@@ -53,7 +53,7 @@ def calculate_missed_payments(subscriptions: List[Subscription], all_orders: Dic
     """
     Calculate the number and value of missed payments from on-hold or active subscriptions.
     """
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     missed_payments_count = 0
     missed_payments_value = 0.0
     

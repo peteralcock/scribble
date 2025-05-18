@@ -1,4 +1,5 @@
-version: '3.8'
+# The top-level 'version' attribute is obsolete and has been removed.
+# Docker Compose will infer the version or use a default.
 
 services:
   tests:
@@ -10,7 +11,9 @@ services:
     # Pytest will exit with a non-zero code if tests fail
     command: pytest -v --cov=app tests/
     environment:
-      # These are already set in the Dockerfile but can be reiterated here if needed
+      # Explicitly set PYTHONPATH to the working directory inside the container
+      # This ensures that modules like 'app' can be found from the 'tests' directory
+      - PYTHONPATH=/app 
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONUNBUFFERED=1
     # This service does not need to expose any ports
@@ -32,3 +35,4 @@ services:
         # This condition ensures that the 'app' service will only start
         # if the 'tests' service (i.e., our test suite) completes successfully.
         condition: service_completed_successfully
+

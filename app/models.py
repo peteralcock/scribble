@@ -8,7 +8,7 @@ class Subscription(BaseModel):
     end_date__c: Optional[datetime] = None
     next_payment_date__c: Optional[datetime] = None
     recurring_amount__c: Optional[float] = None
-    start_date__c: datetime
+    start_date__c: Optional[datetime] = None
     status__c: str
 
 class Order(BaseModel):

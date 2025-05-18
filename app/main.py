@@ -69,7 +69,13 @@ async def get_analytics(api_client: AudicusAPIClient = Depends(get_api_client)):
             subscription_stats=subscription_stats,
             missed_payment_stats=missed_payment_stats
         )
+    
+    except HTTPException as http_exc:
+        # Specifically catch HTTPException and re-raise it as is
+        logger.error(f"HTTPException in get_analytics: {http_exc.status_code} - {http_exc.detail}")
+        raise http_exc
         
     except Exception as e:
-        logger.error(f"Error getting analytics: {e}")
+        # For other exceptions, return a 500 status code
+        logger.error(f"Error getting analytics: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
