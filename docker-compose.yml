@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  tests:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # Command to run the tests
+    # The output of the tests will be visible in the console
+    # Pytest will exit with a non-zero code if tests fail
+    command: pytest -v --cov=app tests/
+    environment:
+      # These are already set in the Dockerfile but can be reiterated here if needed
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+    # This service does not need to expose any ports
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile # Uses the same image built by Docker
+    ports:
+      # Map port 8000 on the host to port 8000 in the container
+      - "8000:8000"
+    # The default CMD from the Dockerfile ("python application.py") will be used
+    # Alternatively, you could specify: command: python application.py
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      tests:
+        # This condition ensures that the 'app' service will only start
+        # if the 'tests' service (i.e., our test suite) completes successfully.
+        condition: service_completed_successfully
